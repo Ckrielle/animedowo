@@ -1,0 +1,100 @@
+#!/bin/sh
+
+
+print_usage()
+{
+	echo "AnimedOWO made by Ckrielle with <3"
+	echo " "
+	echo "Usage: dowo -s [sessions] -d [duration] -b [break duration] -a [anime] -e [episode]"
+	echo " "
+	echo "Flags: "
+	echo "-s:    Define how many sessions you want (default=5)"
+	echo "-d:    Define the duration of each session (default=40)"
+	echo "-b:    Define the duration of each break (default=20)"
+	echo "-a:    Define the 9anime.to identifier of your anime (e.g. gintama.5kq)"
+	echo "-e:    Define the episode from which to start (default=1)"
+	echo "-h:    Display this message"
+	exit 1
+}
+
+
+setup()
+{
+	while getopts s:d:b:a:e:h flag;
+	do
+		case $flag in
+			s) sessions=${OPTARG}  ;;
+			d) duration=${OPTARG}  ;;
+			b) breaks=${OPTARG}    ;;
+			a) anime=${OPTARG}     ;;
+			e) episode=${OPTARG}   ;;
+			h) print_usage	       ;;
+		esac
+	done
+
+	[ -z "$sessions" ] && sessions=5
+	[ -z "$duration" ] && duration=45
+	[ -z "$breaks" ] && breaks=20
+	[ -z "$anime" ] && anime="gintama.5kq"
+	[ -z "$episode" ] && episode=1
+
+	sudo cp /etc/hosts /etc/hosts.bak
+	sudo sh -c 'cat ban_sites >> /etc/hosts'
+}
+
+
+message_loop()
+{
+	time=$1
+	message=$2
+	while [ $time -gt 0 ];
+	do
+		seconds=60
+		while [ $seconds -gt 0 ];
+		do
+			clear
+			figlet -c "$((time-1)):$seconds"
+			figlet -c $message
+			sleep 1
+			((seconds--))
+		done
+		((time--))
+	done
+}
+
+
+main()
+{
+	clear
+
+	figlet -c "Welcome to animedOWO!"
+	sleep 1
+
+	count=10
+	while [ $count -gt 0 ];
+	do
+		clear
+		figlet -c "SESSION STARTING IN"
+		figlet -c $count
+		((count--))
+		sleep 1
+	done
+
+	while [ $sessions -gt 0 ];
+	do
+		message_loop $duration "ANIMEDOWO TIME!!"
+		clear
+		figlet -c "SESSION END!!"
+		ffplay -hide_banner -loglevel error -nodisp -autoexit bell.opus 2>&1
+		[ $sessions -ne 1 ] && xdg-open "https://9anime.to/watch/$anime/ep-$episode" && message_loop $breaks "BREAK TIME!!"
+		((sessions--))
+		((episode++))
+	done
+	sudo mv /etc/hosts.bak /etc/hosts
+	xdg-open "https://www.youtube.com/watch?v=WKGs20VchQs"
+	clear
+}
+
+
+setup "$@" # pass all arguments of program to setup function (getopts requires it)
+main
